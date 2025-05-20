@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login | SetupZone</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: linear-gradient(120deg, #f5eba6, #c564d1); /* radiant bg for light mode */
+      --text-color: #000000;
+    }
+
+    body.dark {
+      --bg-color: #0000009a;
+      --text-color: #f8fafc;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+     :root {
+      --bg-color: linear-gradient(120deg, #f5eba6, #c564d1);
+      --text-color: #000000;
+      --transition-duration: 0.5s;
+    }
+
+    body.dark {
+      --bg-color: #0000009a;
+      --text-color: #f8fafc;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      transition: background var(--transition-duration) ease, 
+                  color var(--transition-duration) ease;
+      overflow: hidden; /* Prevent scroll during transition */
+    }
+
+    /* Page transition overlay */
+    .transition-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--bg-color);
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--transition-duration) ease;
+    }
+
+    .transition-active .transition-overlay {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* Rest of your existing styles... */
+    #toggle-theme {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background: linear-gradient(135deg, #f199c8 0%, #ff66b3 100%);
+      color: white;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      box-shadow: 0 4px 10px rgba(241, 153, 200, 0.3);
+      border: 2px solid white;
+      z-index: 1000;
+    }
+
+    .login-container {
+      background-color: white;
+      border-radius: 16px;
+      padding: 2rem;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.177);
+      transform: translateY(0);
+      opacity: 1;
+      transition: transform var(--transition-duration) ease, 
+                 opacity var(--transition-duration) ease;
+    }
+
+    .transition-active .login-container {
+      transform: translateY(-20px);
+      opacity: 0;
+    }
+
+    /* Rest of your existing styles... */
+
+#toggle-theme {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  background: linear-gradient(135deg, #f199c8 0%, #ff66b3 100%); /* Gradient to match cart */
+  color: white;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 0 4px 10px rgba(241, 153, 200, 0.3);
+  border: 2px solid white;
+  z-index: 1000;
+}
+
+#toggle-theme:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 6px 15px rgba(241, 153, 200, 0.4);
+  background: linear-gradient(135deg, #ff66b3 0%, #f199c8 100%); /* Reverse gradient on hover */
+}
+
+/* Moon icon for dark mode indication */
+#toggle-theme::after {
+  content: "🌙";
+  position: absolute;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.dark-mode #toggle-theme::after {
+  opacity: 1;
+}
+
+.dark-mode #toggle-theme::before {
+  content: "☀️";
+  opacity: 0;
+}
+
+.dark-mode #toggle-theme:hover::before {
+  opacity: 0;
+}
+
+.dark-mode #toggle-theme:hover::after {
+  opacity: 1;
+}
+    .login-container {
+      background-color: white;
+      border-radius: 16px;
+      padding: 2rem;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.177);
+    }
+
+    h2 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 1rem;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      margin: 0.5rem 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 0.75rem;
+      background-color: #6a11cb;
+      background-image: linear-gradient(315deg, #6a11cb 0%, #2575fc 74%);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: 600;
+      font-size: 1rem;
+      margin-top: 1rem;
+      cursor: pointer;
+    }
+
+    .btn.secondary {
+      background: #e0e0e0;
+      color: #333;
+      margin-top: 0.5rem;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+
+    .alert {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      background-color: #ffdddd;
+      color: #a94442;
+      border: 1px solid #e6c1c1;
+      border-radius: 6px;
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+   <!-- Add this at the top of your body -->
+  <div class="transition-overlay"></div>
+  
+  <button id="toggle-theme">🌙</button>
+  <div class="login-container">
+    <h2>Welcome Back 👋</h2>
+    <form id="auth-form">
+      <input type="email" id="email" placeholder="Email" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <button class="btn" type="submit" id="login">Login</button>
+      <button class="btn secondary" type="button" id="register">Register</button>
+    </form>
+    <div class="alert" id="alert-box"></div>
+  </div>
+
+  
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA_NU0Cz5XqDyBQehpYiuTlUjCXFWx4bsM",
+      authDomain: "insane-gaming-setup.firebaseapp.com",
+      projectId: "insane-gaming-setup",
+      storageBucket: "insane-gaming-setup.appspot.com",
+      messagingSenderId: "472778417206",
+      appId: "1:472778417206:web:b1cca04cf9d19f897c6497",
+      measurementId: "G-3KC6TVL9DV"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // DOM elements
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const alertBox = document.getElementById("alert-box");
+    const form = document.getElementById("auth-form");
+    const registerBtn = document.getElementById("register");
+    const toggle = document.getElementById('toggle-theme');
+    const transitionOverlay = document.querySelector('.transition-overlay');
+    const body = document.body;
+
+    // Error messages mapping
+    const errorMap = {
+      "auth/invalid-email": "❌ Invalid email format.",
+      "auth/user-not-found": "❌ No account found with this email.",
+      "auth/wrong-password": "❌ Incorrect password.",
+      "auth/email-already-in-use": "❌ Email already registered.",
+      "auth/weak-password": "❌ Password should be at least 6 characters.",
+    };
+
+    function showAlert(message) {
+      const errorKey = message.split('auth/')[1]?.split(')')[0];
+      const mapped = errorMap[`auth/${errorKey}`] || message;
+      alertBox.innerText = mapped;
+      alertBox.style.display = "block";
+      setTimeout(() => alertBox.style.display = "none", 3000);
+    }
+
+    // Smooth page transition
+    function navigateWithTransition(url) {
+      body.classList.add('transition-active');
+      setTimeout(() => {
+        window.location.href = url;
+      }, 500); // Match this with your CSS transition duration
+    }
+
+    // Login handler
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = emailInput.value;
+      const password = passwordInput.value;
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        showAlert("✅ Logged in successfully!");
+        setTimeout(() => {
+          navigateWithTransition("index.html");
+        }, 1000);
+      } catch (err) {
+        showAlert("❌ " + err.message);
+      }
+    });
+
+    // Register handler
+    registerBtn.addEventListener("click", async () => {
+      const email = emailInput.value;
+      const password = passwordInput.value;
+      try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        showAlert("✅ Account created successfully!");
+        setTimeout(() => {
+          navigateWithTransition("index.html");
+        }, 1000);
+      } catch (err) {
+        showAlert("❌ " + err.message);
+      }
+    });
+
+    // Theme toggle
+    toggle.addEventListener('click', () => {
+      document.body.classList.toggle('dark');
+      toggle.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+    });
+
+    // Check auth state
+  </script>
+</body>
+</html>

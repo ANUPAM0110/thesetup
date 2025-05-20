@@ -1,0 +1,2397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incognito - Anonymous Group Chat</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Firebase SDK (compat version) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-analytics-compat.js"></script>
+    <style>
+         :root {
+        --bg-color: #f0f2f5;
+        --card-color: #ffffff;
+        --text-color: #1d1d1f;
+        --accent-color: #6366f1;
+        --secondary-color: #818cf8;
+        --muted-color: #64748b;
+        --input-bg: #f8fafc;
+        --danger-color: #ef4444;
+        --success-color: #10b981;
+        --header-bg: rgba(99, 102, 241, 0.98);
+        --radius: 12px;
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    html, body {
+        height: 100%;
+        font-family: 'Inter', sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+    }
+
+    /* Main container */
+    .container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 1rem;
+        gap: 1rem;
+    }
+
+    /* Header */
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        background: var(--header-bg);
+        color: white;
+        border-radius: var(--radius);
+        backdrop-filter: blur(10px);
+    }
+
+    /* Group grid */
+    .group-grid {
+        flex: 1;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1rem;
+        overflow-y: auto;
+        padding: 0.5rem;
+    }
+
+    .group-card {
+        background: var(--card-color);
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        cursor: pointer;
+        transition: transform 0.2s;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .group-card:hover {
+        transform: translateY(-3px);
+    }
+
+    /* Chat container */
+    .chat-container {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        gap: 1rem;
+        height: calc(100vh - 120px);
+    }
+
+    /* Participants panel */
+    .participants-panel {
+        background: var(--card-color);
+        border-radius: var(--radius);
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    /* Messages area */
+    .messages-area {
+        display: flex;
+        flex-direction: column;
+        background: var(--card-color);
+        border-radius: var(--radius);
+        overflow: hidden;
+    }
+
+    .messages-list {
+        flex: 1;
+        padding: 1rem;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    /* Message input */
+    .message-input-container {
+        padding: 1rem;
+        background: var(--input-bg);
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .message-input {
+        flex: 1;
+        padding: 0.8rem 1.2rem;
+        border: none;
+        border-radius: 2rem;
+        background: var(--card-color);
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .container {
+            padding: 0.5rem;
+        }
+
+        .chat-container {
+            grid-template-columns: 1fr;
+            height: calc(100vh - 80px);
+        }
+
+        .participants-panel {
+            display: none;
+        }
+
+        .header {
+            padding: 0.75rem;
+        }
+
+        .group-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .message-input-container {
+            padding: 0.75rem;
+        }
+
+        .message-input {
+            padding: 0.6rem 1rem;
+        }
+    }
+
+    /* Utility classes */
+    .flex-center {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--accent-color);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 500;
+    }
+
+    .badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 1rem;
+        background: var(--accent-color);
+        color: white;
+        font-size: 0.8rem;
+    }
+        /* Group Selection Screen Styles */
+        .group-selection {
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            height: 100vh;
+            justify-content: center;
+        }
+        
+        .group-selection h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--text-color);
+        }
+        
+        .group-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .group-card {
+            background: var(--card-color);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .group-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .group-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        
+        .group-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--text-color);
+        }
+        
+        .group-members {
+            font-size: 0.8rem;
+            color: var(--muted-color);
+        }
+        
+        .create-group-container {
+            margin-top: 30px;
+            text-align: center;
+        }
+        
+        .create-group-btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            font-size: 1rem;
+        }
+        
+        .create-group-btn:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+        
+        .create-group-btn:active {
+            transform: translateY(0);
+        }
+        
+        .create-group-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .create-group-modal.open {
+            display: flex;
+        }
+        
+        .create-group-form {
+            background: var(--card-color);
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .create-group-form h3 {
+            margin-bottom: 20px;
+            text-align: center;
+            color: var(--text-color);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--input-bg);
+            border-radius: 8px;
+            background: var(--input-bg);
+            font-size: 1rem;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        
+        .form-actions button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        
+        .cancel-btn {
+            background: transparent;
+            border: 1px solid var(--muted-color);
+            color: var(--muted-color);
+        }
+        
+        .submit-btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+        }
+
+        body.dark-mode {
+            --bg-color: #1a202c;
+            --card-color: #2d3748;
+            --text-color: #f7fafc;
+            --input-bg: #4a5568;
+            --muted-color: #a0aec0;
+            --header-bg: rgba(46, 16, 101, 0.9);
+            --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.12);
+            --poll-option-bg: #5b21b6;
+            --poll-bar-bg: #a78bfa;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, system-ui, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+
+        /* Header */
+        .header {
+            padding: 0.75rem 1rem;
+            background: var(--header-bg);
+            backdrop-filter: var(--header-glass);
+            -webkit-backdrop-filter: var(--header-glass);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .group-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .header-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 150px;
+        }
+
+        .online-count {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background-color: var(--card-color);
+            border-bottom: 1px solid var(--input-bg);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 0.8rem;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .tab.active {
+            color: var(--accent-color);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: var(--accent-color);
+        }
+
+        .tab-badge {
+            background-color: var(--accent-color);
+            color: white;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            padding: 0.1rem 0.4rem;
+            margin-left: 0.3rem;
+        }
+
+        /* Icon Buttons */
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .icon-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .icon-btn:active {
+            transform: scale(0.95);
+        }
+
+        .icon-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            position: relative;
+        }
+
+        .theme-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.3s ease;
+            opacity: 1;
+        }
+
+        .theme-icon.sun {
+            color: #fbbf24;
+        }
+
+        .theme-icon.moon {
+            color: #e2e8f0;
+        }
+
+        body.dark-mode .theme-icon.sun {
+            opacity: 0;
+            transform: translate(-50%, -50%) rotate(90deg);
+        }
+
+        body:not(.dark-mode) .theme-icon.moon {
+            opacity: 0;
+            transform: translate(-50%, -50%) rotate(-90deg);
+        }
+
+        /* Chat Container */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Chat Windows */
+        .chat-window {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-window.active {
+            display: flex;
+        }
+
+        .chat-window:not(.active) {
+            display: none;
+        }
+
+        /* Messages */
+        .messages {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            display: flex;
+            gap: 0.8rem;
+            max-width: 90%;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.self {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .message.system {
+            align-self: center;
+            max-width: 100%;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            flex-shrink: 0;
+            user-select: none;
+        }
+
+        .message-content {
+            background-color: var(--card-color);
+            padding: 0.8rem 1rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow-sm);
+            word-break: break-word;
+            line-height: 1.4;
+        }
+
+        .message.self .message-content {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .message.system .message-content {
+            background-color: transparent;
+            text-align: center;
+            color: var(--muted-color);
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+        }
+
+        .message.system.success .message-content {
+            color: var(--success-color);
+        }
+
+        .message-info {
+            display: flex;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--muted-color);
+            margin-top: 0.3rem;
+            align-items: center;
+        }
+
+        .message.self .message-info {
+            justify-content: flex-end;
+        }
+
+        .reaction {
+            cursor: pointer;
+            transition: transform 0.2s;
+            user-select: none;
+        }
+
+        .reaction:hover {
+            transform: scale(1.2);
+        }
+
+        .reactions-container {
+            display: flex;
+            gap: 0.3rem;
+            margin-top: 0.3rem;
+            flex-wrap: wrap;
+        }
+
+        /* Poll */
+        .poll {
+            margin-top: 0.5rem;
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+
+        .poll-question {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .poll-option {
+            padding: 0.5rem;
+            margin-bottom: 0.3rem;
+            background-color: var(--poll-option-bg);
+            border-radius: 0.3rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .poll-option:hover {
+            opacity: 0.9;
+        }
+
+        .poll-option.selected {
+            font-weight: 500;
+        }
+
+        .poll-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            background-color: var(--poll-bar-bg);
+            opacity: 0.2;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .poll-text {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .poll-percentage {
+            font-weight: 500;
+        }
+
+        /* Input Area */
+        .input-area {
+            padding: 1rem;
+            display: flex;
+            gap: 0.8rem;
+            background-color: var(--card-color);
+            border-top: 1px solid var(--input-bg);
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 0.8rem 1.2rem;
+            border: none;
+            border-radius: 2rem;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            outline: none;
+            font-size: 1rem;
+            transition: box-shadow 0.2s;
+        }
+
+        .message-input:focus {
+            box-shadow: 0 0 0 2px var(--accent-color);
+        }
+
+        .send-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: transform 0.2s;
+        }
+
+        .send-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Guess Who Game Panel */
+        .game-panel {
+            background-color: var(--card-color);
+            border-top: 1px solid var(--input-bg);
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .game-panel.open {
+            max-height: 300px;
+        }
+
+        .game-header {
+            padding: 0.8rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .game-header h2 {
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+        }
+
+        .game-header span {
+            transition: transform 0.3s;
+        }
+
+        .game-panel.open .game-header span {
+            transform: rotate(180deg);
+        }
+
+        .game-content {
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .game-status {
+            font-size: 0.9rem;
+            color: var(--muted-color);
+            line-height: 1.4;
+        }
+
+        .game-status.active {
+            color: var(--success-color);
+        }
+
+        .guess-input {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .guess-input input {
+            flex: 1;
+            padding: 0.7rem 1rem;
+            border: none;
+            border-radius: 1rem;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            outline: none;
+            font-size: 0.9rem;
+        }
+
+        .guess-btn {
+            padding: 0 1.2rem;
+            border-radius: 1rem;
+            background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: transform 0.2s;
+        }
+
+        .guess-btn:active {
+            transform: scale(0.98);
+        }
+
+        .reveal-btn {
+            width: 100%;
+            padding: 0.7rem;
+            border-radius: 1rem;
+            background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            margin-top: 0.5rem;
+        }
+
+        .game-players {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+        }
+
+        .player {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .player:active {
+            transform: scale(0.95);
+        }
+
+        .player-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background-color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .player-name {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            max-width: 60px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Admin Panel */
+        .admin-panel {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 280px;
+            height: 100%;
+            background-color: var(--card-color);
+            box-shadow: var(--shadow-md);
+            transition: right 0.3s ease;
+            padding: 1rem;
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .admin-panel.open {
+            right: 0;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 1px solid var(--input-bg);
+        }
+
+        .admin-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .close-admin {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-color);
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+        }
+
+        .close-admin:hover {
+            background-color: var(--input-bg);
+        }
+
+        .admin-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .admin-section h3 {
+            font-size: 0.85rem;
+            margin-bottom: 0.8rem;
+            color: var(--muted-color);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .admin-section h3 svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
+        .admin-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            width: 100%;
+            padding: 0.8rem;
+            border-radius: 0.75rem;
+            background-color: var(--input-bg);
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            margin-bottom: 0.5rem;
+            text-align: left;
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
+        }
+
+        .admin-btn:hover {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .admin-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        .admin-btn.danger {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+        }
+
+        .admin-btn.danger:hover {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        /* User List */
+        .user-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 0.6rem 0.8rem;
+            border-radius: 0.75rem;
+            background-color: var(--input-bg);
+            transition: all 0.2s;
+        }
+
+        .user-item:hover {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .user-name {
+            flex: 1;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--success-color);
+        }
+
+        /* Emoji Picker */
+        .emoji-picker {
+            position: absolute;
+            bottom: 80px;
+            right: 20px;
+            width: 300px;
+            background-color: var(--card-color);
+            border-radius: 0.75rem;
+            box-shadow: var(--shadow-md);
+            padding: 0.8rem;
+            z-index: 90;
+            display: none;
+        }
+
+        .emoji-picker.open {
+            display: block;
+        }
+
+        .emoji-categories {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.8rem;
+            overflow-x: auto;
+            padding-bottom: 0.3rem;
+        }
+
+        .emoji-category {
+            background: none;
+            border: none;
+            padding: 0.3rem;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+
+        .emoji-category.active {
+            opacity: 1;
+        }
+
+        .emoji-category svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        .emoji-search {
+            width: 100%;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            background-color: var(--input-bg);
+            border: none;
+            margin-bottom: 0.8rem;
+            color: var(--text-color);
+        }
+
+        .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 0.3rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .emoji-btn {
+            font-size: 1.2rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.2rem;
+            border-radius: 0.3rem;
+            transition: background-color 0.2s;
+        }
+
+        .emoji-btn:hover {
+            background-color: var(--input-bg);
+        }
+
+        /* Message Context Menu */
+        .context-menu {
+            position: fixed;
+            background-color: var(--card-color);
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow-md);
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 180px;
+        }
+
+        .context-menu.open {
+            display: flex;
+        }
+
+        .context-item {
+            padding: 0.7rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .context-item:hover {
+            background-color: var(--input-bg);
+        }
+
+        .context-item svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
+        .context-item.danger {
+            color: var(--danger-color);
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+            color: var(--muted-color);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .typing-indicator.active {
+            opacity: 1;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 0.2rem;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background-color: var(--muted-color);
+            border-radius: 50%;
+            animation: typingAnimation 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typingAnimation {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-4px); }
+        }
+
+        /* Message Status Indicators */
+        .status-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Media Messages */
+        .media-container {
+            margin-top: 0.5rem;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            position: relative;
+            max-width: 300px;
+        }
+
+        .media-image {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .media-video {
+            width: 100%;
+            border-radius: 0.75rem;
+        }
+
+        .media-play-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 48px;
+            height: 48px;
+            background-color: rgba(0,0,0,0.6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .media-play-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: white;
+        }
+
+        /* File Upload Preview */
+        .upload-preview {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--card-color);
+            border-radius: 0.75rem;
+            box-shadow: var(--shadow-md);
+            padding: 1rem;
+            z-index: 90;
+            display: none;
+            flex-direction: column;
+            max-width: 90%;
+            width: 400px;
+        }
+
+        .upload-preview.open {
+            display: flex;
+        }
+
+        .upload-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .upload-title {
+            font-weight: 600;
+        }
+
+        .upload-close {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: var(--muted-color);
+        }
+
+        .upload-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .upload-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .upload-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 0.5rem;
+            background-color: var(--input-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .upload-icon svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--muted-color);
+        }
+
+        .upload-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .upload-name {
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .upload-size {
+            font-size: 0.8rem;
+            color: var(--muted-color);
+        }
+
+        .upload-progress {
+            height: 4px;
+            background-color: var(--input-bg);
+            border-radius: 2px;
+            margin-top: 0.3rem;
+            overflow: hidden;
+        }
+
+        .upload-progress-bar {
+            height: 100%;
+            background-color: var(--accent-color);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .upload-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.8rem;
+            margin-top: 1rem;
+        }
+
+        .upload-btn {
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .upload-cancel {
+            background-color: var(--input-bg);
+            border: none;
+            color: var(--text-color);
+        }
+
+        .upload-send {
+            background-color: var(--accent-color);
+            border: none;
+            color: white;
+        }
+
+        /* Audio Player */
+        .audio-player {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-top: 0.5rem;
+            background-color: var(--input-bg);
+            border-radius: 2rem;
+            padding: 0.5rem 1rem;
+            max-width: 250px;
+        }
+
+        .audio-play-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background-color: var(--accent-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .audio-progress {
+            flex: 1;
+            height: 4px;
+            background-color: rgba(0,0,0,0.1);
+            border-radius: 2px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .audio-progress-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background-color: var(--accent-color);
+            width: 0%;
+        }
+
+        .audio-time {
+            font-size: 0.7rem;
+            color: var(--muted-color);
+            min-width: 40px;
+            text-align: right;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--card-color);
+            border-radius: 0.75rem;
+            box-shadow: var(--shadow-md);
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            z-index: 1000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            max-width: 300px;
+        }
+
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .notification-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .notification-icon.success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .notification-icon.error {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+        }
+
+        .notification-message {
+            font-size: 0.9rem;
+            color: var(--muted-color);
+        }
+
+        .notification-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--muted-color);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .group-list {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            
+            .header-title {
+                max-width: 100px;
+            }
+            
+            .messages {
+                padding: 0.8rem;
+            }
+            
+            .message {
+                max-width: 95%;
+            }
+            
+            .input-area {
+                padding: 0.8rem;
+            }
+            
+            .admin-panel {
+                width: 260px;
+            }
+            
+            .emoji-picker {
+                width: 280px;
+                right: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .group-list {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-title {
+                display: none;
+            }
+            
+            .message-input {
+                padding: 0.7rem 1rem;
+                font-size: 0.95rem;
+            }
+            
+            .send-btn {
+                width: 42px;
+                height: 42px;
+            }
+            
+            .tab {
+                font-size: 0.9rem;
+                padding: 0.7rem 0.5rem;
+            }
+            
+            .emoji-picker {
+                width: 100%;
+                right: 0;
+                bottom: 70px;
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body></body>
+    <!-- Group Selection Screen -->
+    <div class="group-selection">
+        <h2>Join a Group Chat</h2>
+        <div class="group-list">
+            <div class="group-card">
+                <div class="group-avatar">GP</div>
+                <div class="group-name">General</div>
+                <div class="group-members">1,234 members</div>
+            </div>
+            <div class="group-card">
+                <div class="group-avatar">FY</div>
+                <div class="group-name">Fun & Games</div>
+                <div class="group-members">876 members</div>
+            </div>
+            <div class="group-card">
+                <div class="group-avatar">MV</div>
+                <div class="group-name">Movies & TV</div>
+                <div class="group-members">542 members</div>
+            </div>
+            <div class="group-card">
+                <div class="group-avatar">MS</div>
+                <div class="group-name">Music</div>
+                <div class="group-members">1,021 members</div>
+            </div>
+            <div class="group-card">
+                <div class="group-avatar">SP</div>
+                <div class="group-name">Sports</div>
+                <div class="group-members">689 members</div>
+            </div>
+            <div class="group-card">
+                <div class="group-avatar">TC</div>
+                <div class="group-name">Tech</div>
+                <div class="group-members">1,542 members</div>
+            </div>
+        </div>
+        <div class="create-group-container">
+            <button class="create-group-btn">Create New Group</button>
+        </div>
+    </div>
+
+    <!-- Create Group Modal -->
+    <div class="create-group-modal">
+        <div class="create-group-form">
+            <h3>Create New Group</h3>
+            <div class="form-group">
+                <label for="group-name">Group Name</label>
+                <input type="text" id="group-name" placeholder="Enter group name">
+            </div>
+            <div class="form-group">
+                <label for="group-topic">Topic (optional)</label>
+                <input type="text" id="group-topic" placeholder="What's this group about?">
+            </div>
+            <div class="form-actions">
+                <button class="cancel-btn">Cancel</button>
+                <button class="submit-btn">Create Group</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Interface (initially hidden) -->
+    <div class="chat-interface" style="display: none;">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="group-avatar">GP</div>
+                <div>
+                    <div class="header-title">General</div>
+                    <div class="online-count">234 online</div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="icon-btn theme-toggle">
+                    <span class="theme-icon sun">☀️</span>
+                    <span class="theme-icon moon">🌙</span>
+                </button>
+                <button class="icon-btn admin-toggle">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97 0-.33-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1 0 .33.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.06.74 1.69.99l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.26 1.17-.59 1.69-.99l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.66z"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <div class="tab active">
+                Chat <span class="tab-badge">3</span>
+            </div>
+            <div class="tab">
+                Polls
+            </div>
+            <div class="tab">
+                Games
+            </div>
+        </div>
+
+        <!-- Chat Container -->
+        <div class="chat-container">
+            <!-- Chat Window -->
+            <div class="chat-window active">
+                <!-- Messages -->
+                <div class="messages">
+                    <!-- System Message -->
+                    <div class="message system">
+                        <div class="message-content">
+                            You joined the group as "PurpleHorse"
+                        </div>
+                    </div>
+
+                    <!-- Other User Message -->
+                    <div class="message">
+                        <div class="avatar">BL</div>
+                        <div class="message-content">
+                            Hey everyone! What's up?
+                            <div class="message-info">
+                                <span>BlueLion</span>
+                                <span>2:45 PM</span>
+                            </div>
+                            <div class="reactions-container">
+                                <span class="reaction">👍</span>
+                                <span class="reaction">❤️</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Self Message -->
+                    <div class="message self">
+                        <div class="avatar">PH</div>
+                        <div class="message-content">
+                            Not much, just hanging out. How about you?
+                            <div class="message-info">
+                                <span>2:46 PM</span>
+                                <span>✓✓</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Message with Media -->
+                    <div class="message">
+                        <div class="avatar">RD</div>
+                        <div class="message-content">
+                            Check out this cool photo I found!
+                            <div class="media-container">
+                                <img src="https://source.unsplash.com/random/300x200" alt="Random" class="media-image">
+                            </div>
+                            <div class="message-info">
+                                <span>RedDragon</span>
+                                <span>2:48 PM</span>
+                            </div>
+                            <div class="reactions-container">
+                                <span class="reaction">🔥</span>
+                                <span class="reaction">👀</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Message with Poll -->
+                    <div class="message">
+                        <div class="avatar">SG</div>
+                        <div class="message-content">
+                            <div class="poll-question">What's your favorite programming language?</div>
+                            <div class="poll">
+                                <div class="poll-option selected">
+                                    <div class="poll-bar" style="width: 45%"></div>
+                                    <div class="poll-text">
+                                        <span>JavaScript</span>
+                                        <span class="poll-percentage">45%</span>
+                                    </div>
+                                </div>
+                                <div class="poll-option">
+                                    <div class="poll-bar" style="width: 30%"></div>
+                                    <div class="poll-text">
+                                        <span>Python</span>
+                                        <span class="poll-percentage">30%</span>
+                                    </div>
+                                </div>
+                                <div class="poll-option">
+                                    <div class="poll-bar" style="width: 15%"></div>
+                                    <div class="poll-text">
+                                        <span>Java</span>
+                                        <span class="poll-percentage">15%</span>
+                                    </div>
+                                </div>
+                                <div class="poll-option">
+                                    <div class="poll-bar" style="width: 10%"></div>
+                                    <div class="poll-text">
+                                        <span>C++</span>
+                                        <span class="poll-percentage">10%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="message-info">
+                                <span>SilverGiraffe</span>
+                                <span>2:50 PM</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Message with Audio -->
+                    <div class="message self">
+                        <div class="avatar">PH</div>
+                        <div class="message-content">
+                            Here's that audio clip you wanted
+                            <div class="audio-player">
+                                <button class="audio-play-btn">▶</button>
+                                <div class="audio-progress">
+                                    <div class="audio-progress-bar" style="width: 30%"></div>
+                                </div>
+                                <div class="audio-time">1:45 / 3:20</div>
+                            </div>
+                            <div class="message-info">
+                                <span>2:52 PM</span>
+                                <span>✓✓</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Typing Indicator -->
+                    <div class="typing-indicator">
+                        <div class="avatar">GS</div>
+                        <div>GreenSnake is typing</div>
+                        <div class="typing-dots">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <div class="input-area">
+                    <button class="icon-btn emoji-btn">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"></path>
+                        </svg>
+                    </button>
+                    <input type="text" class="message-input" placeholder="Type a message...">
+                    <button class="icon-btn attachment-btn">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"></path>
+                        </svg>
+                    </button>
+                    <button class="send-btn">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" fill="white"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Polls Window -->
+            <div class="chat-window">
+                <div class="messages">
+                    <div class="message system">
+                        <div class="message-content">
+                            Polls will appear here when created in the chat
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Games Window -->
+            <div class="chat-window">
+                <div class="messages">
+                    <div class="message system">
+                        <div class="message-content">
+                            Active games will appear here
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Guess Who Game Panel -->
+        <div class="game-panel">
+            <div class="game-header">
+                <h2>🎮 Guess Who</h2>
+                <span>▼</span>
+            </div>
+            <div class="game-content">
+                <div class="game-status active">
+                    Game in progress - Guess who the mystery person is!
+                </div>
+                <div class="guess-input">
+                    <input type="text" placeholder="Enter your guess...">
+                    <button class="guess-btn">Guess</button>
+                </div>
+                <div class="game-players">
+                    <div class="player">
+                        <div class="player-avatar">PH</div>
+                        <div class="player-name">PurpleHorse</div>
+                    </div>
+                    <div class="player">
+                        <div class="player-avatar">BL</div>
+                        <div class="player-name">BlueLion</div>
+                    </div>
+                    <div class="player">
+                        <div class="player-avatar">RD</div>
+                        <div class="player-name">RedDragon</div>
+                    </div>
+                    <div class="player">
+                        <div class="player-avatar">SG</div>
+                        <div class="player-name">SilverGiraffe</div>
+                    </div>
+                    <div class="player">
+                        <div class="player-avatar">GS</div>
+                        <div class="player-name">GreenSnake</div>
+                    </div>
+                </div>
+                <button class="reveal-btn">Reveal Answer</button>
+            </div>
+        </div>
+
+        <!-- Admin Panel -->
+        <div class="admin-panel">
+            <div class="admin-header">
+                <div class="admin-title">Group Settings</div>
+                <button class="close-admin">×</button>
+            </div>
+            <div class="admin-section">
+                <h3>
+                    <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
+                    </svg>
+                    Members (24)
+                </h3>
+                <div class="user-list">
+                    <div class="user-item">
+                        <div class="user-avatar">PH</div>
+                        <div class="user-name">PurpleHorse</div>
+                        <div class="user-status"></div>
+                    </div>
+                    <div class="user-item">
+                        <div class="user-avatar">BL</div>
+                        <div class="user-name">BlueLion</div>
+                        <div class="user-status"></div>
+                    </div>
+                    <div class="user-item">
+                        <div class="user-avatar">RD</div>
+                        <div class="user-name">RedDragon</div>
+                        <div class="user-status"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="admin-section">
+                <h3>
+                    <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.03-.73-1.56-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.53.25-1.04.59-1.56.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.03.73 1.56.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.53-.25 1.04-.59 1.56-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"></path>
+                    </svg>
+                    Group Settings
+                </h3>
+                <button class="admin-btn">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"></path>
+                    </svg>
+                    Change Group Avatar
+                </button>
+                <button class="admin-btn">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"></path>
+                    </svg>
+                    Edit Group Description
+                </button>
+                <button class="admin-btn danger">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"></path>
+                    </svg>
+                    Delete Group
+                </button>
+            </div>
+            <div class="admin-section">
+                <h3>
+                    <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
+                    </svg>
+                    Invite People
+                </h3>
+                <button class="admin-btn">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"></path>
+                    </svg>
+                    Invite via Link
+                </button>
+                <button class="admin-btn">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"></path>
+                    </svg>
+                    Invite via Email
+                </button>
+            </div>
+        </div>
+
+        <!-- Emoji Picker -->
+        <div class="emoji-picker">
+            <div class="emoji-categories">
+                <button class="emoji-category active">😀</button>
+                <button class="emoji-category">🐶</button>
+                <button class="emoji-category">🍕</button>
+                <button class="emoji-category">⚽</button>
+                <button class="emoji-category">🚗</button>
+                <button class="emoji-category">🎵</button>
+                <button class="emoji-category">❤️</button>
+            </div>
+            <input type="text" class="emoji-search" placeholder="Search emojis...">
+            <div class="emoji-grid">
+                <button class="emoji-btn">😀</button>
+                <button class="emoji-btn">😃</button>
+                <button class="emoji-btn">😄</button>
+                <button class="emoji-btn">😁</button>
+                <button class="emoji-btn">😆</button>
+                <button class="emoji-btn">😅</button>
+                <button class="emoji-btn">😂</button>
+                <button class="emoji-btn">🤣</button>
+                <button class="emoji-btn">😊</button>
+                <button class="emoji-btn">😇</button>
+                <button class="emoji-btn">🙂</button>
+                <button class="emoji-btn">🙃</button>
+                <button class="emoji-btn">😉</button>
+                <button class="emoji-btn">😌</button>
+                <button class="emoji-btn">😍</button>
+                <button class="emoji-btn">🥰</button>
+                <button class="emoji-btn">😘</button>
+                <button class="emoji-btn">😗</button>
+                <button class="emoji-btn">😙</button>
+                <button class="emoji-btn">😚</button>
+                <button class="emoji-btn">😋</button>
+                <button class="emoji-btn">😛</button>
+                <button class="emoji-btn">😝</button>
+                <button class="emoji-btn">😜</button>
+                <button class="emoji-btn">🤪</button>
+                <button class="emoji-btn">🤨</button>
+                <button class="emoji-btn">🧐</button>
+                <button class="emoji-btn">🤓</button>
+                <button class="emoji-btn">😎</button>
+                <button class="emoji-btn">🤩</button>
+                <button class="emoji-btn">🥳</button>
+                <button class="emoji-btn">😏</button>
+                <button class="emoji-btn">😒</button>
+                <button class="emoji-btn">😞</button>
+                <button class="emoji-btn">😔</button>
+                <button class="emoji-btn">😟</button>
+                <button class="emoji-btn">😕</button>
+                <button class="emoji-btn">🙁</button>
+                <button class="emoji-btn">☹️</button>
+                <button class="emoji-btn">😣</button>
+                <button class="emoji-btn">😖</button>
+                <button class="emoji-btn">😫</button>
+                <button class="emoji-btn">😩</button>
+                <button class="emoji-btn">🥺</button>
+                <button class="emoji-btn">😢</button>
+                <button class="emoji-btn">😭</button>
+                <button class="emoji-btn">😤</button>
+                <button class="emoji-btn">😠</button>
+                <button class="emoji-btn">😡</button>
+                <button class="emoji-btn">🤬</button>
+                <button class="emoji-btn">🤯</button>
+                <button class="emoji-btn">😳</button>
+                <button class="emoji-btn">🥵</button>
+                <button class="emoji-btn">🥶</button>
+                <button class="emoji-btn">😱</button>
+                <button class="emoji-btn">😨</button>
+                <button class="emoji-btn">😰</button>
+                <button class="emoji-btn">😥</button>
+                <button class="emoji-btn">😓</button>
+                <button class="emoji-btn">🤗</button>
+                <button class="emoji-btn">🤔</button>
+                <button class="emoji-btn">🤭</button>
+                <button class="emoji-btn">🤫</button>
+                <button class="emoji-btn">🤥</button>
+                <button class="emoji-btn">😶</button>
+                <button class="emoji-btn">😐</button>
+                <button class="emoji-btn">😑</button>
+                <button class="emoji-btn">😬</button>
+                <button class="emoji-btn">🙄</button>
+                <button class="emoji-btn">😯</button>
+                <button class="emoji-btn">😦</button>
+                <button class="emoji-btn">😧</button>
+                <button class="emoji-btn">😮</button>
+                <button class="emoji-btn">😲</button>
+                <button class="emoji-btn">🥱</button>
+                <button class="emoji-btn">😴</button>
+                <button class="emoji-btn">🤤</button>
+                <button class="emoji-btn">😪</button>
+                <button class="emoji-btn">😵</button>
+                <button class="emoji-btn">🤐</button>
+                <button class="emoji-btn">🥴</button>
+                <button class="emoji-btn">🤢</button>
+                <button class="emoji-btn">🤮</button>
+                <button class="emoji-btn">🤧</button>
+                <button class="emoji-btn">😷</button>
+                <button class="emoji-btn">🤒</button>
+                <button class="emoji-btn">🤕</button>
+                <button class="emoji-btn">🤑</button>
+                <button class="emoji-btn">🤠</button>
+                <button class="emoji-btn">😈</button>
+                <button class="emoji-btn">👿</button>
+                <button class="emoji-btn">👹</button>
+                <button class="emoji-btn">👺</button>
+                <button class="emoji-btn">🤡</button>
+                <button class="emoji-btn">💩</button>
+                <button class="emoji-btn">👻</button>
+                <button class="emoji-btn">💀</button>
+                <button class="emoji-btn">☠️</button>
+                <button class="emoji-btn">👽</button>
+                <button class="emoji-btn">👾</button>
+                <button class="emoji-btn">🤖</button>
+                <button class="emoji-btn">🎃</button>
+                <button class="emoji-btn">😺</button>
+                <button class="emoji-btn">😸</button>
+                <button class="emoji-btn">😹</button>
+                <button class="emoji-btn">😻</button>
+                <button class="emoji-btn">😼</button>
+                <button class="emoji-btn">😽</button>
+                <button class="emoji-btn">🙀</button>
+                <button class="emoji-btn">😿</button>
+                <button class="emoji-btn">😾</button>
+            </div>
+        </div>
+
+        <!-- Upload Preview -->
+        <div class="upload-preview">
+            <div class="upload-header">
+                <div class="upload-title">Send File</div>
+                <button class="upload-close">×</button>
+            </div>
+            <div class="upload-content">
+                <div class="upload-item">
+                    <div class="upload-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"></path>
+                        </svg>
+                    </div>
+                    <div class="upload-info">
+                        <div class="upload-name">document.pdf</div>
+                        <div class="upload-size">2.4 MB</div>
+                        <div class="upload-progress">
+                            <div class="upload-progress-bar" style="width: 65%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="upload-actions">
+                <button class="upload-btn upload-cancel">Cancel</button>
+                <button class="upload-btn upload-send">Send</button>
+            </div>
+        </div>
+
+        <!-- Context Menu -->
+        <div class="context-menu">
+            <div class="context-item">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"></path>
+                </svg>
+                Copy Text
+            </div>
+            <div class="context-item">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
+                </svg>
+                Add Reaction
+            </div>
+            <div class="context-item">
+                <svg viewBox="0 0 24 24">
+                    <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"></path>
+                </svg>
+                Share
+            </div>
+            <div class="context-item danger">
+                <svg viewBox="0 0 24 24">
+                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"></path>
+                </svg>
+                Delete
+            </div>
+        </div>
+
+        <!-- Notification -->
+        <div class="notification">
+            <div class="notification-icon success">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path>
+                </svg>
+            </div>
+            <div class="notification-content">
+                <div class="notification-title">Message Sent</div>
+                <div class="notification-message">Your message was delivered successfully</div>
+            </div>
+            <button class="notification-close">×</button>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const groupSelection = document.querySelector('.group-selection');
+        const chatInterface = document.querySelector('.chat-interface');
+        const groupCards = document.querySelectorAll('.group-card');
+        const createGroupBtn = document.querySelector('.create-group-btn');
+        const createGroupModal = document.querySelector('.create-group-modal');
+        const cancelBtn = document.querySelector('.cancel-btn');
+        const submitBtn = document.querySelector('.submit-btn');
+        const tabs = document.querySelectorAll('.tab');
+        const chatWindows = document.querySelectorAll('.chat-window');
+        const themeToggle = document.querySelector('.theme-toggle');
+        const adminPanel = document.querySelector('.admin-panel');
+        const adminToggle = document.querySelector('.admin-toggle');
+        const closeAdmin = document.querySelector('.close-admin');
+        const gamePanel = document.querySelector('.game-panel');
+        const gameHeader = document.querySelector('.game-header');
+        const emojiBtn = document.querySelector('.emoji-btn');
+        const emojiPicker = document.querySelector('.emoji-picker');
+        const emojiBtns = document.querySelectorAll('.emoji-btn');
+        const messageInput = document.querySelector('.message-input');
+        const sendBtn = document.querySelector('.send-btn');
+        const messagesContainer = document.querySelector('.messages');
+
+        // Event Listeners
+        groupCards.forEach(card => {
+            card.addEventListener('click', () => {
+                groupSelection.style.display = 'none';
+                chatInterface.style.display = 'flex';
+                document.body.style.flexDirection = 'column';
+            });
+        });
+
+        createGroupBtn.addEventListener('click', () => {
+            createGroupModal.classList.add('open');
+        });
+
+        cancelBtn.addEventListener('click', () => {
+            createGroupModal.classList.remove('open');
+        });
+
+        submitBtn.addEventListener('click', () => {
+            createGroupModal.classList.remove('open');
+            // Here you would typically create the group and add it to the list
+        });
+
+        tabs.forEach((tab, index) => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs
+                tabs.forEach(t => t.classList.remove('active'));
+                // Add active class to clicked tab
+                tab.classList.add('active');
+                
+                // Hide all chat windows
+                chatWindows.forEach(window => window.classList.remove('active'));
+                // Show the corresponding chat window
+                chatWindows[index].classList.add('active');
+            });
+        });
+
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+        });
+
+        adminToggle.addEventListener('click', () => {
+            adminPanel.classList.toggle('open');
+        });
+
+        closeAdmin.addEventListener('click', () => {
+            adminPanel.classList.remove('open');
+        });
+
+        gameHeader.addEventListener('click', () => {
+            gamePanel.classList.toggle('open');
+        });
+
+        emojiBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            emojiPicker.classList.toggle('open');
+        });
+
+        document.addEventListener('click', () => {
+            emojiPicker.classList.remove('open');
+        });
+
+        emojiBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                messageInput.value += e.target.textContent;
+                emojiPicker.classList.remove('open');
+                messageInput.focus();
+            });
+        });
+
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        sendBtn.addEventListener('click', sendMessage);
+
+        function sendMessage() {
+            const text = messageInput.value.trim();
+            if (text) {
+                // Create message element
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message self';
+                
+                const avatarDiv = document.createElement('div');
+                avatarDiv.className = 'avatar';
+                avatarDiv.textContent = 'PH';
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+                contentDiv.textContent = text;
+                
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'message-info';
+                
+                const timeSpan = document.createElement('span');
+                const now = new Date();
+                timeSpan.textContent = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                const statusSpan = document.createElement('span');
+                statusSpan.textContent = '✓✓';
+                
+                infoDiv.appendChild(timeSpan);
+                infoDiv.appendChild(statusSpan);
+                contentDiv.appendChild(infoDiv);
+                
+                messageDiv.appendChild(avatarDiv);
+                messageDiv.appendChild(contentDiv);
+                
+                messagesContainer.appendChild(messageDiv);
+                messageInput.value = '';
+                
+                // Scroll to bottom
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                
+                // Show notification
+                const notification = document.querySelector('.notification');
+                notification.classList.add('show');
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
+        }
+
+        // Initialize typing indicator
+        let typingTimeout;
+        messageInput.addEventListener('input', () => {
+            const typingIndicator = document.querySelector('.typing-indicator');
+            typingIndicator.classList.add('active');
+            
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => {
+                typingIndicator.classList.remove('active');
+            }, 2000);
+        });
+
+        // Close notification
+        document.querySelector('.notification-close').addEventListener('click', () => {
+            document.querySelector('.notification').classList.remove('show');
+        });
+
+        // Close upload preview
+        document.querySelector('.upload-close').addEventListener('click', () => {
+            document.querySelector('.upload-preview').classList.remove('open');
+        });
+
+        // Simulate message received
+        setTimeout(() => {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+            
+            const avatarDiv = document.createElement('div');
+            avatarDiv.className = 'avatar';
+            avatarDiv.textContent = 'GS';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = 'Hey there! Just testing the chat functionality.';
+            
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'message-info';
+            
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = 'GreenSnake';
+            
+            const timeSpan = document.createElement('span');
+            const now = new Date();
+            timeSpan.textContent = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            infoDiv.appendChild(nameSpan);
+            infoDiv.appendChild(timeSpan);
+            contentDiv.appendChild(infoDiv);
+            
+            messageDiv.appendChild(avatarDiv);
+            messageDiv.appendChild(contentDiv);
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }, 5000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,367 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Browse premium gaming room decor products, including furniture, posters, lighting, and more." />
+  <title>Premium Product Grid</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&diplay=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <!-- Corrected Inter font import -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<!-- Add these to your HTML head -->
+<!-- Replace your current Firebase scripts with these -->
+<!-- Load these before your script.js -->
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="site-header"><div>
+      <button class="mobile-menu-toggle" aria-label="Toggle mobile menu">
+  <span class="menu-icon">☰</span>
+  <span class="menu-text">MENU</span>
+</button>
+  <!-- Header -->
+    <div class="logo">🏠 SetupZone</div>
+    <nav class="nav-links">
+      <a href="#">🏠 Home</a>
+      <a href="#">🛍️ Shop</a>
+      <a href="#">ℹ️ About</a>
+      <a href="#">📞 Contact</a>
+    </nav>
+    </div>
+  
+  </header>
+
+  <!-- Controls -->
+  <div class="controls">
+    <div class="search-container" style="position: relative;">
+        <input type="text" id="search-bar" placeholder="Search for products..." />
+        <ul id="suggestions"></ul> <!-- Suggestions will appear here -->
+      </div>
+      
+    <select id="category-filter">
+      <option value="all">All Categories</option>
+      <option value="posters">Posters</option>
+      <option value="furniture">Furniture</option>
+      <option value="lighting">Lighting</option>
+    </select>
+  
+    <select id="sort-by">
+      <option value="default">Sort by</option>
+      <option value="low-high">Price: Low to High</option>
+      <option value="high-low">Price: High to Low</option>
+    </select>
+  </div>
+
+  <!-- Modal -->
+<div id="product-modal" class="modal" role="dialog" aria-hidden="true">
+  <div class="modal-content">
+    <span class="close" aria-label="Close modal">&times;</span>
+    <img id="modal-img" src="product.jpg" alt="Product Image" />
+    <div class="modal-info">
+      
+      <h3 id="modal-title">Product Name</h3>
+      <p id="modal-price">₹0</p>
+      <p id="modal-desc" class="modal-description">Product description</p>
+      <div class="modal-actions">
+        <button id="add-to-cart" class="modal-btn btn-primary">Add to Cart</button>
+        <button id="add-to-wishlist" class="modal-btn btn-secondary">Wishlist</button>
+      </div>
+    </div>
+  </div>
+</div>
+  <!-- Product Grid -->
+    <div class="container">
+        <section>
+            <h2>Featured Items</h2>
+            <div class="grid">
+
+                <!-- Product 1: RGB LED Strip Lights -->
+                <div class="card" data-category="lighting">
+                    <img src="https://foyr.com/learn/wp-content/uploads/2019/01/lighting-for-gaming-room-scaled.jpg" alt="LED Lighting" />
+                    <div class="info">
+                        <p class="price">₹3499</p><p class="discounted">₹2999</p>
+                        <button class="add-to-cart" 
+                                data-name="RGB LED Strip Lights" 
+                                data-price="2999" 
+                                data-image="https://foyr.com/learn/wp-content/uploads/2019/01/lighting-for-gaming-room-scaled.jpg"
+                                data-description="Transform your gaming setup with these vibrant 16-color RGB LED strip lights, featuring a remote control for easy customization. Perfect for ambient backlighting behind desks, monitors, or shelves. Includes multiple lighting modes (static, flash, fade, smooth) and adjustable brightness. Self-adhesive backing for easy installation.">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Product 2: Gaming Decor Set -->
+                <div class="card" data-category="furniture">
+                    <img src="https://cdn.shopify.com/s/files/1/0644/5013/4180/files/kushsama_set_up_a_personal_gaming_computer_in_a_girl_room_cute__25ae19a9-7a30-475b-ac34-596114f87b80_480x480.webp?v=1713785010" alt="Gaming Decor" />
+                    <div class="info">
+                        <p class="price">₹4599</p><p class="discounted">₹3999</p>
+                        <button class="add-to-cart" 
+                                data-name="Gaming Decor Set" 
+                                data-price="3999" 
+                                data-image="https://cdn.shopify.com/s/files/1/0644/5013/4180/files/kushsama_set_up_a_personal_gaming_computer_in_a_girl_room_cute__25ae19a9-7a30-475b-ac34-596114f87b80_480x480.webp?v=1713785010"
+                                data-description="Upgrade your gaming station with this premium decor bundle, including: Anti-slip mouse pad (900x400mm), headset stand with RGB lighting, and controller holder with non-slip base. Made from durable materials with a sleek black & red design.">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Product 3: 3D Acoustic Wall Panels -->
+                <div class="card" data-category="furniture">
+                    <img src="https://m.media-amazon.com/images/I/815NKi8l4kL._UF1000,1000_QL80_.jpg" alt="Wall Panels" />
+                    <div class="info">
+                        <p class="price">₹1999</p><p class="discounted">₹1499</p>
+                        <button class="add-to-cart" 
+                                data-name="3D Acoustic Wall Panels" 
+                                data-price="1499" 
+                                data-image="https://m.media-amazon.com/images/I/815NKi8l4kL._UF1000,1000_QL80_.jpg"
+                                data-description="Enhance your room's aesthetics and sound quality with these hexagonal 3D wall panels. Features sound-absorbing foam that reduces echo, peel-and-stick installation (no tools needed), and comes in a set of 6 panels (mix & match colors). Great for streaming setups or home theaters.">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Product 4: Ergonomic Gaming Chair -->
+                <div class="card" data-category="furniture">
+                    <img src="https://foyr.com/learn/wp-content/uploads/2019/01/seating-for-gaming-room.jpg" alt="Gaming Chair" />
+                    <div class="info">
+                        <p class="price">₹12999</p><p class="discounted">₹10999</p>
+                        <button class="add-to-cart" 
+                                data-name="Ergonomic Gaming Chair" 
+                                data-price="10999" 
+                                data-image="https://foyr.com/learn/wp-content/uploads/2019/01/seating-for-gaming-room.jpg"
+                                data-description="Stay comfortable during long gaming sessions with this high-back ergonomic chair featuring adjustable lumbar support & armrests, 360° swivel & reclining backrest, PU leather upholstery (easy to clean), and supports up to 120kg weight capacity.">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Product 5: Smart Atmosphere Lighting Kit -->
+                <div class="card" data-category="lighting">
+                    <img src="https://www.almila.com.tr/sites/default/files/styles/content_header_mobile/public/2024-06/37888785-fa43-4243-ae48-2a9ca2f35ff0_atmosphaerisches-gamer-zimmer.jpg.webp?itok=6YA57pOv" alt="Atmosphere Setup" />
+                    <div class="info">
+                        <p class="price">₹5999</p><p class="discounted">₹4999</p>
+                        <button class="add-to-cart" 
+                                data-name="Smart Atmosphere Lighting Kit" 
+                                data-price="4999" 
+                                data-image="https://www.almila.com.tr/sites/default/files/styles/content_header_mobile/public/2024-06/37888785-fa43-4243-ae48-2a9ca2f35ff0_atmosphaerisches-gamer-zimmer.jpg.webp?itok=6YA57pOv"
+                                data-description="Sync your room's lighting with gameplay using this Wi-Fi-enabled RGBIC light kit. Works with Alexa/Google Assistant for voice control, features music sync mode (reacts to sound), and includes app-controlled color customization. Package includes 10ft LED strip + 2 corner connectors.">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Product 6: Premium Gaming Posters -->
+                <div class="card" data-category="posters">
+                    <img src="https://i.pinimg.com/736x/da/95/0a/da950ab5bd3f8812988bf75113af8d27.jpg" alt="Poster Wall" />
+                    <div class="info">
+                        <p class="price">₹899</p><p class="discounted">₹699</p>
+                        <button class="add-to-cart" 
+                                data-name="Premium Gaming Posters (Set of 3)" 
+                                data-price="699" 
+                                data-image="https://i.pinimg.com/736x/da/95/0a/da950ab5bd3f8812988bf75113af8d27.jpg"
+                                data-description="Decorate your walls with high-quality laminated posters (12x18 inches) featuring glossy finish for vibrant colors. Includes 3 popular designs (eSports, retro games, anime) with pre-punched holes for easy framing.">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Product 7: Minimalist Gaming Desk -->
+                <div class="card" data-category="furniture">
+                    <img src="https://cdn.shopify.com/s/files/1/1881/2599/files/0d554ee22af77852eabae82936cee6ee_480x480.jpg?v=1717754907" alt="Minimal Desk" />
+                    <div class="info">
+                        <p class="price">₹7999</p><p class="discounted">₹6999</p>
+                        <button class="add-to-cart" 
+                                data-name="Minimalist Gaming Desk" 
+                                data-price="6999" 
+                                data-image="https://cdn.shopify.com/s/files/1/1881/2599/files/0d554ee22af77852eabae82936cee6ee_480x480.jpg?v=1717754907"
+                                data-description="A sleek 55-inch desk designed for gamers featuring built-in cable management (hidden routing), cup holder & headphone hook, sturdy metal frame with wood-finish top, and enough space to support dual monitors comfortably.">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Product 8: Anime-Themed LED Light Kit -->
+                <div class="card" data-category="lighting">
+                    <img src="https://static.wixstatic.com/media/973641_dd18afbf52c44615b55545334043c0ee~mv2.jpg/v1/fill/w_480,h_600,al_c,q_80,usm_0.66_1.00_0.01,enc_avif,quality_auto/973641_dd18afbf52c44615b55545334043c0ee~mv2.jpg" alt="Star Wars Theme" />
+                    <div class="info">
+                        <p class="price">₹2999</p><p class="discounted">₹2499</p>
+                        <button class="add-to-cart" 
+                                data-name="Anime-Themed LED Light Kit" 
+                                data-price="2499" 
+                                data-image="https://static.wixstatic.com/media/973641_dd18afbf52c44615b55545334043c0ee~mv2.jpg/v1/fill/w_480,h_600,al_c,q_80,usm_0.66_1.00_0.01,enc_avif,quality_auto/973641_dd18afbf52c44615b55545334043c0ee~mv2.jpg"
+                                data-description="Showcase your love for anime with this special-edition LED kit that projects character silhouettes. Includes 10ft strip with remote control and features 4 dynamic scene modes (strobe, wave, etc.) for immersive lighting effects.">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Product 9: Removable Gaming Wall Stickers -->
+                <div class="card" data-category="posters">
+                    <img src="https://www.huetion.com/media/catalog/product/cache/fc968504d73242eeb5af558e5cfedb2f/g/a/gaming_wall_stickers_for_gaming_room_decor.jpg" alt="Wall Stickers" />
+                    <div class="info">
+                        <p class="price">₹1299</p><p class="discounted">₹999</p>
+                        <button class="add-to-cart" 
+                                data-name="Removable Gaming Wall Stickers" 
+                                data-price="999" 
+                                data-image="https://www.huetion.com/media/catalog/product/cache/fc968504d73242eeb5af558e5cfedb2f/g/a/gaming_wall_stickers_for_gaming_room_decor.jpg"
+                                data-description="Personalize your space with 15 vinyl stickers featuring popular game logos & characters. These high-quality stickers leave no residue when removed and feature easy peel-and-stick application.">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Product 10: LED Floating Shelves -->
+                <div class="card" data-category="furniture">
+                    <img src="https://images-cdn.ubuy.co.in/66f1469f4206364186049347-gaming-floating-shelves-with-lights-led.jpg" alt="Floating Shelves" />
+                    <div class="info">
+                        <p class="price">₹3499</p><p class="discounted">₹2999</p>
+                        <button class="add-to-cart" 
+                                data-name="LED Floating Shelves (Set of 3)" 
+                                data-price="2999" 
+                                data-image="https://images-cdn.ubuy.co.in/66f1469f4206364186049347-gaming-floating-shelves-with-lights-led.jpg"
+                                data-description="Display collectibles in style with these RGB-lit shelves. Each shelf can hold up to 10kg and measures 24x8 inches. Features touch-control lighting with 16 color options, perfect for showcasing gaming memorabilia.">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Product 11: Gaming-Themed Area Rug -->
+                <div class="card" data-category="furniture">
+                    <img src="https://images-cdn.ubuy.co.in/64494581a47132191378bd25-large-video-gaming-area-rug-for.jpg" alt="Gaming Rug" />
+                    <div class="info">
+                        <p class="price">₹4999</p><p class="discounted">₹3999</p>
+                        <button class="add-to-cart" 
+                                data-name="Gaming-Themed Area Rug" 
+                                data-price="3999" 
+                                data-image="https://images-cdn.ubuy.co.in/64494581a47132191378bd25-large-video-gaming-area-rug-for.jpg"
+                                data-description="A 5x7 feet premium gaming rug with non-slip rubber backing featuring controller and headphone designs with vibrant colors. Machine washable for easy cleaning and maintenance.">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Product 12: Metal Game Art Prints -->
+                <div class="card" data-category="posters">
+                    <img src="https://portrilux.com/cdn/shop/articles/Portrilux_Metal_Prints_1200x1200_6e066b39-0dd6-4064-a62a-ed3631d519c0.webp?v=1681851705" alt="Metal Prints" />
+                    <div class="info">
+                        <p class="price">₹2499</p><p class="discounted">₹1999</p>
+                        <button class="add-to-cart" 
+                                data-name="Metal Game Art Prints" 
+                                data-price="1999" 
+                                data-image="https://portrilux.com/cdn/shop/articles/Portrilux_Metal_Prints_1200x1200_6e066b39-0dd6-4064-a62a-ed3631d519c0.webp?v=1681851705"
+                                data-description="Durable aluminum prints featuring iconic gaming artwork available in 12x12 or 16x16 sizes. These scratch-resistant and fade-proof prints use direct-print technology for vivid colors and include all necessary mounting hardware.">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<!-- Theme Toggle Button -->
+<button id="theme-toggle">🌙</button>
+
+<div id="cart-container">
+  <div id="cart-icon">
+    <span id="cart-count">0</span>
+    🛒
+  </div>
+</div>
+
+<!-- Full-Screen Cart Modal -->
+<div id="cart-box" style="display: none;">
+  <h3>Your Cart <button id="cart-close-btn">×</button></h3>
+  
+  <div id="cart-items-container">
+    <ul id="cart-items">
+      <!-- Cart items will be dynamically inserted here -->
+    </ul>
+  </div>
+  
+  <div id="cart-summary">
+    <p id="cart-total">Total: ₹0</p>
+    <button id="checkout">PROCEED TO CHECKOUT</button>
+  </div>
+</div>
+
+  <!-- Comments Section -->
+<section class="comments-section">
+  <h2 class="section-title">COMMENTS</h2>
+  
+  <div class="comment-form">
+    <textarea id="comment-input" placeholder="thoughts..." rows="2"></textarea>
+    <div class="form-footer">
+      <div class="char-counter">0/250</div>
+      <button id="submit-comment" class="cyber-button">POST</button>
+    </div>
+  </div>
+
+  <div class="comments-container">
+    <!-- Comments will load here dynamically -->
+  </div>
+
+  <div class="comments-footer">
+    <button class="load-more-btn">Load More Comments</button>
+    <div class="login-prompt">
+      <p>Want to comment? 
+        <a href="login2.html" class="cyber-link">Login</a> or 
+        <a href="login2.html" class="cyber-link">Sign Up</a>
+      </p>
+    </div>
+  </div>
+</section>
+<!-- Cart Icon to Open the Cart Modal -->
+
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h3>SHOP</h3>
+        <div class="footer-links">
+          <a href="#">New Arrivals</a>
+          <a href="#">Best Sellers</a>
+          <a href="#">Bundles</a>
+        </div>
+      </div>
+      
+      <div class="footer-section">
+        <h3>SUPPORT</h3>
+        <div class="footer-links">
+          <a href="#">Contact</a>
+          <a href="#">FAQs</a>
+          <a href="#">Shipping</a>
+        </div>
+      </div>
+      
+      <div class="footer-section">
+        <h3>CONNECT</h3>
+        <div class="social-icons">
+          <a href="https://www.instagram.com/oi_ace__/" class="social-icon">📱</a>
+          <a href="#" class="social-icon">💻</a>
+          <a href="#" class="social-icon">🎮</a>
+          <a href="LEGEND0110w@GMAIL.COM" class="social-icon">📧</a>
+        </div>
+        <button id="logout">Log Out</button>
+      </div>
+    </div>
+    
+    <div class="copyright">
+      © 2023 INSANE_SETUP
+    </div>
+  </footer>
+
+    <!-- Script -->
+<!-- Other scripts -->
+<script src="script.js"></script>
+</body>
+</html>
